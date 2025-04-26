@@ -96,12 +96,11 @@ const handleAttack = async (attacker, target, ws, clients) => {
     isDead: target.health?.current <= 0
   };
   
-  // Send to all clients in the same area
-  broadcastToArea(attacker.position, combatMessage, clients);
+  // Send to all clients in the battle
+  broadcastToBattle(attacker, combatMessage, clients);
 };
 
 const handleSkillUse = async (character, target, skillId, ws, clients) => {
-  // TODO: Implement skill system
   const skill = character.skills.find(s => s.skill._id.toString() === skillId);
   
   if (!skill) {
@@ -121,12 +120,38 @@ const handleSkillUse = async (character, target, skillId, ws, clients) => {
     return;
   }
   
-  // Apply skill effects
-  // TODO: Implement skill effects
+  // Apply skill effects (simplified)
+  const effects = skill.skill.calculateEffect(character, skill.level);
+  let totalDamage = 0;
+  let totalHeal = 0;
+  
+  effects.forEach(effect => {
+    switch (effect.type) {
+      case 'damage':
+        totalDamage += effect.value;
+        break;
+      case 'heal':
+        totalHeal += effect.value;
+        break;
+    }
+  });
+  
+  // Apply damage or healing
+  if (totalDamage > 0 && target.health) {
+    target.health.current = Math.max(0, target.health.current - totalDamage);
+    if (target.health.current <= 0) {
+      await handleDeath(character, target, ws, clients);
+    }
+  }
+  
+  if (totalHeal > 0 && target.health) {
+    target.health.current = Math.min(target.health.max, target.health.current + totalHeal);
+  }
   
   // Deduct mana
   character.mana.current -= skill.skill.manaCost;
   await character.save();
+  if (target.health) await target.save();
   
   // Broadcast skill use
   const skillMessage = {
@@ -134,10 +159,13 @@ const handleSkillUse = async (character, target, skillId, ws, clients) => {
     characterId: character._id,
     targetId: target._id,
     skillId: skillId,
-    effects: [] // TODO: Add skill effects
+    effects: effects.map(e => ({
+      type: e.type,
+      value: e.value
+    }))
   };
   
-  broadcastToArea(character.position, skillMessage, clients);
+  broadcastToBattle(character, skillMessage, clients);
 };
 
 const handleItemUse = async (character, target, itemId, ws, clients) => {
@@ -164,23 +192,27 @@ const handleMonsterDeath = async (character, monster, ws, clients) => {
   }
   
   // Generate loot
-  const loot = await generateLoot(monster);
+  const loot = await monster.generateLoot();
   
   // Add loot to character inventory
   for (const item of loot) {
     const existingItemIndex = character.inventory.findIndex(
-      invItem => invItem.item.toString() === item._id.toString()
+      invItem => invItem.item.toString() === item.item.toString()
     );
     
-    if (existingItemIndex > -1 && item.stackable) {
-      character.inventory[existingItemIndex].quantity += 1;
+    if (existingItemIndex > -1 && item.item.stackable) {
+      character.inventory[existingItemIndex].quantity += item.quantity;
     } else {
       character.inventory.push({
-        item: item._id,
-        quantity: 1
+        item: item.item,
+        quantity: item.quantity
       });
     }
   }
+  
+  // Add gold
+  const goldDrop = monster.calculateGoldDrop();
+  character.gold += goldDrop;
   
   await character.save();
   
@@ -190,36 +222,21 @@ const handleMonsterDeath = async (character, monster, ws, clients) => {
     monsterId: monster._id,
     killerId: character._id,
     experience: monster.experienceValue || 10,
+    gold: goldDrop,
     loot: loot.map(item => ({
-      id: item._id,
-      name: item.name
+      id: item.item,
+      quantity: item.quantity
     }))
   };
   
-  broadcastToArea(character.position, deathMessage, clients);
+  broadcastToBattle(character, deathMessage, clients);
 };
 
 const handleCharacterDeath = async (killer, victim, ws, clients) => {
   // TODO: Implement character death logic
-  // - Respawn location
+  // - Respawn in town
   // - Experience loss
-  // - Item drop
-};
-
-const generateLoot = async (monster) => {
-  // TODO: Implement proper loot table system
-  const loot = [];
-  
-  // Example: 50% chance to drop a random item
-  if (Math.random() < 0.5) {
-    // Get a random item (simplified example)
-    const item = await Item.findOne({ rarity: 'common' });
-    if (item) {
-      loot.push(item);
-    }
-  }
-  
-  return loot;
+  // - Item drop (PvP)
 };
 
 const calculateBaseDamage = (character) => {
@@ -265,18 +282,13 @@ const calculateDefense = (target) => {
   return defense;
 };
 
-const broadcastToArea = (position, message, clients) => {
+const broadcastToBattle = (character, message, clients) => {
+  // Find all clients in the same battle
   clients.forEach((client) => {
     if (client.characterId && client.ws.readyState === 1) {
-      Character.findById(client.characterId).then(clientCharacter => {
-        if (clientCharacter && 
-            clientCharacter.position.map === position.map &&
-            // Check if within viewing range (e.g., 100 units)
-            Math.abs(clientCharacter.position.x - position.x) <= 100 &&
-            Math.abs(clientCharacter.position.y - position.y) <= 100) {
-          client.ws.send(JSON.stringify(message));
-        }
-      });
+      // For now, just broadcast to all connected clients
+      // In a real implementation, you'd check if they're in the same battle instance
+      client.ws.send(JSON.stringify(message));
     }
   });
 };

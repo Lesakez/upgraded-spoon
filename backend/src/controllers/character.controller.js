@@ -140,34 +140,6 @@ export const deleteCharacter = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Move character
-// @route   PUT /api/characters/:id/move
-// @access  Private
-export const moveCharacter = asyncHandler(async (req, res) => {
-  const { x, y, map } = req.body;
-  
-  const character = await Character.findById(req.params.id);
-
-  if (!character) {
-    res.status(404);
-    throw new Error('Character not found');
-  }
-
-  // Make sure user owns character
-  if (character.user.toString() !== req.user.id) {
-    res.status(401);
-    throw new Error('Not authorized to move this character');
-  }
-
-  character.position = { x, y, map };
-  await character.save();
-
-  res.status(200).json({
-    success: true,
-    data: character.position
-  });
-});
-
 // @desc    Level up character
 // @route   PUT /api/characters/:id/levelup
 // @access  Private
@@ -281,6 +253,41 @@ export const unequipItem = asyncHandler(async (req, res) => {
 
   // Remove from equipment
   character.equipment[slot] = null;
+  await character.save();
+
+  res.status(200).json({
+    success: true,
+    data: character
+  });
+});
+
+// @desc    Rest character (restore health and mana)
+// @route   PUT /api/characters/:id/rest
+// @access  Private
+export const restCharacter = asyncHandler(async (req, res) => {
+  const character = await Character.findById(req.params.id);
+
+  if (!character) {
+    res.status(404);
+    throw new Error('Character not found');
+  }
+
+  // Make sure user owns character
+  if (character.user.toString() !== req.user.id) {
+    res.status(401);
+    throw new Error('Not authorized to rest this character');
+  }
+
+  // Check if character has enough gold
+  const restCost = 50;
+  if (character.gold < restCost) {
+    res.status(400);
+    throw new Error('Not enough gold to rest');
+  }
+
+  // Deduct gold and restore health/mana
+  character.gold -= restCost;
+  character.rest();
   await character.save();
 
   res.status(200).json({

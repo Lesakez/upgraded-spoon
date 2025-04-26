@@ -78,16 +78,32 @@ class SocketService {
     this.emit('CHAT', { message, channel });
   }
 
-  moveCharacter(x, y, direction) {
-    this.emit('MOVEMENT', { x, y, direction });
-  }
-
   attack(targetId, targetType = 'monster') {
     this.emit('COMBAT', { action: 'ATTACK', targetId, targetType });
   }
 
   useSkill(skillId, targetId, targetType = 'monster') {
     this.emit('COMBAT', { action: 'SKILL', skillId, targetId, targetType });
+  }
+
+  useItem(itemId, targetId = null) {
+    this.emit('COMBAT', { action: 'ITEM', itemId, targetId });
+  }
+
+  startBattle(dungeonId) {
+    this.emit('START_BATTLE', { dungeonId });
+  }
+
+  leaveBattle() {
+    this.emit('LEAVE_BATTLE');
+  }
+
+  joinParty(partyId) {
+    this.emit('JOIN_PARTY', { partyId });
+  }
+
+  leaveParty() {
+    this.emit('LEAVE_PARTY');
   }
 }
 

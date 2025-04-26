@@ -44,11 +44,6 @@ const characterSchema = new mongoose.Schema({
     current: { type: Number, default: 100 },
     max: { type: Number, default: 100 }
   },
-  position: {
-    x: { type: Number, default: 0 },
-    y: { type: Number, default: 0 },
-    map: { type: String, default: 'town' }
-  },
   gold: {
     type: Number,
     default: 0,
@@ -82,6 +77,20 @@ const characterSchema = new mongoose.Schema({
     skill: { type: mongoose.Schema.Types.ObjectId, ref: 'Skill' },
     level: { type: Number, default: 1 }
   }],
+  // Battle-related fields
+  inBattle: {
+    type: Boolean,
+    default: false
+  },
+  currentBattle: {
+    dungeonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Dungeon' },
+    instanceId: { type: String },
+    startedAt: { type: Date }
+  },
+  // Social fields
+  partyId: { type: String },
+  guildId: { type: String },
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Character' }],
   isOnline: {
     type: Boolean,
     default: false
@@ -149,6 +158,13 @@ characterSchema.methods.levelUp = function() {
     return true;
   }
   return false;
+};
+
+// Rest method to restore health and mana
+characterSchema.methods.rest = function() {
+  this.health.current = this.health.max;
+  this.mana.current = this.mana.max;
+  this.save();
 };
 
 export default mongoose.models.Character || mongoose.model('Character', characterSchema);

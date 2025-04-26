@@ -38,24 +38,6 @@ const chatHandler = async (ws, data, clients) => {
         });
         break;
         
-      case 'local':
-        // Send to clients in the same map/area
-        clients.forEach((client) => {
-          if (client.characterId && client.ws.readyState === 1) {
-            // TODO: Check if characters are in the same location
-            Character.findById(client.characterId).then(clientCharacter => {
-              if (clientCharacter && 
-                  clientCharacter.position.map === character.position.map &&
-                  // Check if within local chat range (e.g., 50 units)
-                  Math.abs(clientCharacter.position.x - character.position.x) <= 50 &&
-                  Math.abs(clientCharacter.position.y - character.position.y) <= 50) {
-                client.ws.send(JSON.stringify(chatMessage));
-              }
-            });
-          }
-        });
-        break;
-        
       case 'whisper':
         // Send to specific character
         const targetCharacter = data.targetCharacterId;
@@ -76,11 +58,21 @@ const chatHandler = async (ws, data, clients) => {
         break;
         
       case 'party':
-        // TODO: Implement party chat
+        // Send to party members
+        clients.forEach((client) => {
+          if (client.partyId === clients.get(ws).partyId && client.ws.readyState === 1) {
+            client.ws.send(JSON.stringify(chatMessage));
+          }
+        });
         break;
         
       case 'guild':
-        // TODO: Implement guild chat
+        // Send to guild members
+        clients.forEach((client) => {
+          if (client.guildId === clients.get(ws).guildId && client.ws.readyState === 1) {
+            client.ws.send(JSON.stringify(chatMessage));
+          }
+        });
         break;
     }
     

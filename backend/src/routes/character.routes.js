@@ -5,10 +5,10 @@ import {
   getCharacter,
   updateCharacter,
   deleteCharacter,
-  moveCharacter,
   levelUpCharacter,
   equipItem,
-  unequipItem
+  unequipItem,
+  restCharacter
 } from '../controllers/character.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
@@ -26,9 +26,9 @@ router.route('/:id')
   .put(updateCharacter)
   .delete(deleteCharacter);
 
-router.put('/:id/move', moveCharacter);
 router.put('/:id/levelup', levelUpCharacter);
 router.put('/:id/equip', equipItem);
 router.put('/:id/unequip', unequipItem);
+router.put('/:id/rest', restCharacter);
 
 export default router;

@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'MedievalSharp', serif;
+  background-color: #1A1F2C;
+  color: white;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1A1F2C;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4F46E5;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6366F1;
+}
+
+/* Game specific styles */
+.game-panel {
+  @apply bg-game-secondary rounded-lg border border-gray-700 shadow-lg;
+}
+
+.game-button {
+  @apply bg-game-accent hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded transition duration-200;
+}
+
+.game-input {
+  @apply bg-game-primary border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-game-accent;
+}

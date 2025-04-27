@@ -4,7 +4,7 @@ import { useGame } from '../../contexts/GameContext';
 const Chat = () => {
   const [message, setMessage] = useState('');
   const [channel, setChannel] = useState('global');
-  const { chatMessages, sendChatMessage } = useGame();
+  const { chatMessages, sendChatMessage, selectedCharacter } = useGame(); // Добавил selectedCharacter
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {

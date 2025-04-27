@@ -61,6 +61,19 @@ const Leaderboard = () => {
     return <div className="game-panel p-4">Loading leaderboard...</div>;
   }
 
+  // Определяем данные для отображения
+  const leaderboardEntries = (() => {
+    if (!leaderboardData) return [];
+    
+    if (activeTab === 'pvp') {
+      // Для PvP данные хранятся непосредственно в leaderboardData
+      return Array.isArray(leaderboardData) ? leaderboardData : [];
+    } else {
+      // Для остальных типов данные хранятся в leaderboardData.entries
+      return Array.isArray(leaderboardData.entries) ? leaderboardData.entries : [];
+    }
+  })();
+
   return (
     <div className="space-y-4">
       {/* Leaderboard Header */}
@@ -100,7 +113,7 @@ const Leaderboard = () => {
         {/* Rankings List */}
         {leaderboardData && (
           <div className="space-y-3">
-            {(activeTab === 'pvp' ? leaderboardData : leaderboardData.entries).map((entry, index) => {
+            {leaderboardEntries.map((entry, index) => {
               const player = activeTab === 'pvp' ? entry : entry.character;
               const rank = activeTab === 'pvp' ? index + 1 : entry.rank;
               

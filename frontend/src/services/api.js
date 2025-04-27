@@ -56,8 +56,10 @@ export const dungeonAPI = {
   getDungeon: (id) => api.get(`/dungeons/${id}`),
   enterDungeon: (id, characterId) => api.post(`/dungeons/${id}/enter`, { characterId }),
   leaveDungeon: (id, data) => api.post(`/dungeons/${id}/leave`, data),
+  moveToNextFloor: (id, data) => api.post(`/dungeons/${id}/nextFloor`, data),
   updateProgress: (id, data) => api.put(`/dungeons/${id}/progress`, data),
   completeDungeon: (id, data) => api.post(`/dungeons/${id}/complete`, data),
+  getDungeonInstances: (id) => api.get(`/dungeons/${id}/instances`)
 };
 
 export const inventoryAPI = {

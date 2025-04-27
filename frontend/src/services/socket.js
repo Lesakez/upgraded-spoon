@@ -75,35 +75,65 @@ class SocketService {
   }
 
   sendChatMessage(message, channel = 'global') {
-    this.emit('CHAT', { message, channel });
+    this.emit('CHAT', { 
+      characterId: localStorage.getItem('selectedCharacterId'), // We might need to store this
+      message, 
+      channel 
+    });
   }
 
   attack(targetId, targetType = 'monster') {
-    this.emit('COMBAT', { action: 'ATTACK', targetId, targetType });
+    this.emit('COMBAT', { 
+      characterId: localStorage.getItem('selectedCharacterId'),
+      action: 'ATTACK', 
+      targetId, 
+      targetType 
+    });
   }
 
   useSkill(skillId, targetId, targetType = 'monster') {
-    this.emit('COMBAT', { action: 'SKILL', skillId, targetId, targetType });
+    this.emit('COMBAT', { 
+      characterId: localStorage.getItem('selectedCharacterId'),
+      action: 'SKILL', 
+      skillId, 
+      targetId, 
+      targetType 
+    });
   }
 
   useItem(itemId, targetId = null) {
-    this.emit('COMBAT', { action: 'ITEM', itemId, targetId });
+    this.emit('COMBAT', { 
+      characterId: localStorage.getItem('selectedCharacterId'),
+      action: 'ITEM', 
+      itemId, 
+      targetId 
+    });
   }
 
   startBattle(dungeonId) {
-    this.emit('START_BATTLE', { dungeonId });
+    this.emit('START_BATTLE', { 
+      characterId: localStorage.getItem('selectedCharacterId'),
+      dungeonId 
+    });
   }
 
   leaveBattle() {
-    this.emit('LEAVE_BATTLE');
+    this.emit('LEAVE_BATTLE', {
+      characterId: localStorage.getItem('selectedCharacterId')
+    });
   }
 
   joinParty(partyId) {
-    this.emit('JOIN_PARTY', { partyId });
+    this.emit('JOIN_PARTY', { 
+      characterId: localStorage.getItem('selectedCharacterId'),
+      partyId 
+    });
   }
 
   leaveParty() {
-    this.emit('LEAVE_PARTY');
+    this.emit('LEAVE_PARTY', {
+      characterId: localStorage.getItem('selectedCharacterId')
+    });
   }
 }
 

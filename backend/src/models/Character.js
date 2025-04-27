@@ -73,10 +73,21 @@ const characterSchema = new mongoose.Schema({
     quest: { type: mongoose.Schema.Types.ObjectId, ref: 'Quest' },
     completedAt: { type: Date, default: Date.now }
   }],
+  completedDungeons: [{
+    dungeon: { type: mongoose.Schema.Types.ObjectId, ref: 'Dungeon' },
+    completedAt: { type: Date, default: Date.now }
+  }],
   skills: [{
     skill: { type: mongoose.Schema.Types.ObjectId, ref: 'Skill' },
     level: { type: Number, default: 1 }
   }],
+  pvpStats: {
+    wins: { type: Number, default: 0 },
+    losses: { type: Number, default: 0 },
+    kills: { type: Number, default: 0 },
+    deaths: { type: Number, default: 0 },
+    rating: { type: Number, default: 1000 }
+  },
   // Battle-related fields
   inBattle: {
     type: Boolean,
@@ -89,7 +100,7 @@ const characterSchema = new mongoose.Schema({
   },
   // Social fields
   partyId: { type: String },
-  guildId: { type: String },
+  guildId: { type: mongoose.Schema.Types.ObjectId, ref: 'Guild' },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Character' }],
   isOnline: {
     type: Boolean,
@@ -165,6 +176,28 @@ characterSchema.methods.rest = function() {
   this.health.current = this.health.max;
   this.mana.current = this.mana.max;
   this.save();
+};
+
+// Add dungeon completion
+characterSchema.methods.completeDungeon = function(dungeonId) {
+  this.completedDungeons.push({
+    dungeon: dungeonId,
+    completedAt: new Date()
+  });
+};
+
+// Update PvP stats
+characterSchema.methods.updatePvPStats = function(result, kills = 0, deaths = 0) {
+  if (result === 'win') {
+    this.pvpStats.wins += 1;
+    this.pvpStats.rating += 25; // Simple rating calculation
+  } else if (result === 'loss') {
+    this.pvpStats.losses += 1;
+    this.pvpStats.rating = Math.max(0, this.pvpStats.rating - 20);
+  }
+  
+  this.pvpStats.kills += kills;
+  this.pvpStats.deaths += deaths;
 };
 
 export default mongoose.models.Character || mongoose.model('Character', characterSchema);

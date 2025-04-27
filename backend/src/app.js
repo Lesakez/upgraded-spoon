@@ -12,6 +12,12 @@ import characterRoutes from './routes/character.routes.js';
 import questRoutes from './routes/quest.routes.js';
 import dungeonRoutes from './routes/dungeon.routes.js';
 import inventoryRoutes from './routes/inventory.routes.js';
+import guildRoutes from './routes/guild.routes.js';
+import shopRoutes from './routes/shop.routes.js';
+import trainingRoutes from './routes/training.routes.js';
+import tavernRoutes from './routes/tavern.routes.js';
+import leaderboardRoutes from './routes/leaderboard.routes.js';
+import pvpRoutes from './routes/pvp.routes.js';
 
 // Load env vars
 dotenv.config();
@@ -38,6 +44,12 @@ app.use('/api/characters', characterRoutes);
 app.use('/api/quests', questRoutes);
 app.use('/api/dungeons', dungeonRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/guilds', guildRoutes);
+app.use('/api/shops', shopRoutes);
+app.use('/api/training', trainingRoutes);
+app.use('/api/tavern', tavernRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/pvp', pvpRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

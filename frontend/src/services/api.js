@@ -37,10 +37,10 @@ export const characterAPI = {
   getCharacter: (id) => api.get(`/characters/${id}`),
   updateCharacter: (id, data) => api.put(`/characters/${id}`, data),
   deleteCharacter: (id) => api.delete(`/characters/${id}`),
-  moveCharacter: (id, position) => api.put(`/characters/${id}/move`, position),
   levelUp: (id) => api.put(`/characters/${id}/levelup`),
   equipItem: (id, data) => api.put(`/characters/${id}/equip`, data),
   unequipItem: (id, data) => api.put(`/characters/${id}/unequip`, data),
+  rest: (id) => api.put(`/characters/${id}/rest`),
 };
 
 export const questAPI = {
@@ -67,6 +67,49 @@ export const inventoryAPI = {
   useItem: (characterId, itemId) => api.post(`/characters/${characterId}/inventory/${itemId}/use`),
   dropItem: (characterId, itemId, data) => api.post(`/characters/${characterId}/inventory/${itemId}/drop`, data),
   transferItem: (characterId, itemId, data) => api.post(`/characters/${characterId}/inventory/${itemId}/transfer`, data),
+};
+
+export const guildAPI = {
+  getGuilds: () => api.get('/guilds'),
+  getGuild: (id) => api.get(`/guilds/${id}`),
+  createGuild: (data) => api.post('/guilds', data),
+  applyToGuild: (id, data) => api.post(`/guilds/${id}/apply`, data),
+  handleApplication: (id, applicationId, data) => api.put(`/guilds/${id}/applications/${applicationId}`, data),
+  leaveGuild: (id, data) => api.post(`/guilds/${id}/leave`, data),
+  kickMember: (id, data) => api.post(`/guilds/${id}/kick`, data),
+  changeMemberRole: (id, memberId, data) => api.put(`/guilds/${id}/members/${memberId}/role`, data),
+  disbandGuild: (id, data) => api.delete(`/guilds/${id}`, { data }),
+};
+
+export const shopAPI = {
+  getAllShops: () => api.get('/shops'),
+  getShopItems: (npcId) => api.get(`/shops/${npcId}`),
+  buyItem: (npcId, data) => api.post(`/shops/${npcId}/buy`, data),
+  sellItem: (npcId, data) => api.post(`/shops/${npcId}/sell`, data),
+};
+
+export const trainingAPI = {
+  getAllTrainers: () => api.get('/training'),
+  getAvailableSkills: (npcId) => api.get(`/training/${npcId}`),
+  learnSkill: (npcId, data) => api.post(`/training/${npcId}/learn`, data),
+  getLearnableSkills: (characterId) => api.get(`/training/learnable/${characterId}`),
+};
+
+export const tavernAPI = {
+  getTavernInfo: () => api.get('/tavern'),
+  useTavernService: (data) => api.post('/tavern/service', data),
+  gamble: (data) => api.post('/tavern/gamble', data),
+};
+
+export const leaderboardAPI = {
+  getLeaderboard: (type) => api.get(`/leaderboard/${type}`),
+  getCharacterRank: (type, characterId) => api.get(`/leaderboard/${type}/rank/${characterId}`),
+};
+
+export const pvpAPI = {
+  joinQueue: (data) => api.post('/pvp/queue', data),
+  leaveQueue: (data) => api.post('/pvp/queue/leave', data),
+  getPvPLeaderboard: () => api.get('/pvp/leaderboard'),
 };
 
 export default api;

@@ -11,19 +11,20 @@ export const GameProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [onlinePlayers, setOnlinePlayers] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
+  const [battleState, setBattleState] = useState(null);
 
   useEffect(() => {
     // Socket event listeners
     socketService.on('CHARACTER_STATUS', handleCharacterStatus);
     socketService.on('CHAT_MESSAGE', handleChatMessage);
-    socketService.on('CHARACTER_MOVEMENT', handleCharacterMovement);
     socketService.on('COMBAT_RESULT', handleCombatResult);
+    socketService.on('BATTLE_UPDATE', handleBattleUpdate);
 
     return () => {
       socketService.off('CHARACTER_STATUS');
       socketService.off('CHAT_MESSAGE');
-      socketService.off('CHARACTER_MOVEMENT');
       socketService.off('COMBAT_RESULT');
+      socketService.off('BATTLE_UPDATE');
     };
   }, []);
 
@@ -41,11 +42,6 @@ export const GameProvider = ({ children }) => {
     setChatMessages(prev => [...prev, message]);
   };
 
-  const handleCharacterMovement = (data) => {
-    // Update character position on the map
-    // This would be implemented with your game map system
-  };
-
   const handleCombatResult = (data) => {
     // Handle combat results (damage, death, etc.)
     if (selectedCharacter && data.targetId === selectedCharacter._id) {
@@ -59,12 +55,16 @@ export const GameProvider = ({ children }) => {
     }
   };
 
+  const handleBattleUpdate = (data) => {
+    setBattleState(data);
+  };
+
   const fetchCharacters = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await characterAPI.getCharacters();
       setCharacters(response.data.data);
-      setError(null);
     } catch (error) {
       setError(error.response?.data?.error || 'Failed to fetch characters');
     } finally {
@@ -75,9 +75,9 @@ export const GameProvider = ({ children }) => {
   const createCharacter = async (characterData) => {
     try {
       setLoading(true);
+      setError(null);
       const response = await characterAPI.createCharacter(characterData);
       setCharacters(prev => [...prev, response.data.data]);
-      setError(null);
       return true;
     } catch (error) {
       setError(error.response?.data?.error || 'Failed to create character');
@@ -90,10 +90,12 @@ export const GameProvider = ({ children }) => {
   const selectCharacter = async (characterId) => {
     try {
       setLoading(true);
+      setError(null);
       const response = await characterAPI.getCharacter(characterId);
       setSelectedCharacter(response.data.data);
+      // Store character ID in localStorage for socket service
+      localStorage.setItem('selectedCharacterId', characterId);
       socketService.selectCharacter(characterId);
-      setError(null);
       return true;
     } catch (error) {
       setError(error.response?.data?.error || 'Failed to select character');
@@ -103,21 +105,38 @@ export const GameProvider = ({ children }) => {
     }
   };
 
+  const refreshCharacterData = async () => {
+    if (!selectedCharacter) return;
+    
+    try {
+      const response = await characterAPI.getCharacter(selectedCharacter._id);
+      setSelectedCharacter(response.data.data);
+    } catch (error) {
+      console.error('Failed to refresh character data:', error);
+    }
+  };
+
   const sendChatMessage = (message, channel = 'global') => {
     if (selectedCharacter) {
       socketService.sendChatMessage(message, channel);
     }
   };
 
-  const moveCharacter = (x, y, direction) => {
-    if (selectedCharacter) {
-      socketService.moveCharacter(x, y, direction);
-    }
-  };
-
   const attackTarget = (targetId, targetType = 'monster') => {
     if (selectedCharacter) {
       socketService.attack(targetId, targetType);
+    }
+  };
+
+  const useSkill = (skillId, targetId, targetType = 'monster') => {
+    if (selectedCharacter) {
+      socketService.useSkill(skillId, targetId, targetType);
+    }
+  };
+
+  const startBattle = (dungeonId) => {
+    if (selectedCharacter) {
+      socketService.startBattle(dungeonId);
     }
   };
 
@@ -128,12 +147,15 @@ export const GameProvider = ({ children }) => {
     error,
     onlinePlayers,
     chatMessages,
+    battleState,
     fetchCharacters,
     createCharacter,
     selectCharacter,
+    refreshCharacterData,
     sendChatMessage,
-    moveCharacter,
     attackTarget,
+    useSkill,
+    startBattle,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

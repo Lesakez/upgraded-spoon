@@ -12,21 +12,52 @@ const Characters = () => {
     fetchCharacters();
   }, []);
 
-  const handleSelectCharacter = async (characterId) => {
-    const success = await selectCharacter(characterId);
-    if (success) {
-      navigate('/game');
+  // Auto-select character if there's only one
+  useEffect(() => {
+    if (!loading && characters.length === 1 && selectCharacter) {
+      handleSelectCharacter(characters[0]._id);
     }
-  };
+  }, [loading, characters, selectCharacter]);
 
-  const handleCreateCharacter = () => {
-    navigate('/character-creation');
+  const handleSelectCharacter = async (characterId) => {
+    if (selectCharacter) {
+      const success = await selectCharacter(characterId);
+      if (success) {
+        navigate('/game');
+      }
+    }
   };
 
   if (loading && characters.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-game-gradient">
         <div className="text-2xl text-game-gold">Loading characters...</div>
+      </div>
+    );
+  }
+
+  // If user has no characters (edge case), redirect to character creation
+  if (!loading && characters.length === 0) {
+    return (
+      <div className="min-h-screen bg-game-gradient p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mt-8">
+            <p className="text-gray-400 mb-4">You don't have any characters yet.</p>
+            <p className="text-red-500 mb-4">This shouldn't happen. Please contact support.</p>
+            <button onClick={logout} className="game-button">
+              Logout and Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If only one character, auto-selecting will handle it
+  if (characters.length === 1) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-game-gradient">
+        <div className="text-2xl text-game-gold">Loading game...</div>
       </div>
     );
   }
@@ -99,27 +130,7 @@ const Characters = () => {
               </div>
             </div>
           ))}
-          
-          {/* Create New Character Card */}
-          <div
-            className="game-panel p-6 cursor-pointer hover:border-game-accent transition-colors flex flex-col items-center justify-center min-h-[200px]"
-            onClick={handleCreateCharacter}
-          >
-            <div className="text-4xl mb-4">+</div>
-            <div className="text-xl font-bold text-game-gold">
-              Create New Character
-            </div>
-          </div>
         </div>
-
-        {characters.length === 0 && !loading && (
-          <div className="text-center mt-8">
-            <p className="text-gray-400 mb-4">You don't have any characters yet.</p>
-            <button onClick={handleCreateCharacter} className="game-button">
-              Create Your First Character
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

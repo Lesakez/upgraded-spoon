@@ -5,11 +5,17 @@ import { GameProvider } from './contexts/GameContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Characters from './pages/Characters';
-import CharacterCreation from './pages/CharacterCreation';
 import Game from './pages/Game';
 import PrivateRoute from './components/PrivateRoute';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: false,
+    },
+  },
+});
 
 function App() {
   return (
@@ -25,14 +31,6 @@ function App() {
                 element={
                   <PrivateRoute>
                     <Characters />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/character-creation"
-                element={
-                  <PrivateRoute>
-                    <CharacterCreation />
                   </PrivateRoute>
                 }
               />

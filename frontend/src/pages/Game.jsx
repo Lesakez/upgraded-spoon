@@ -8,6 +8,9 @@ import Shop from '../components/Shop/Shop';
 import Inventory from '../components/Inventory/Inventory';
 import QuestLog from '../components/Quest/QuestLog';
 import Chat from '../components/Chat/Chat';
+import Trainer from '../components/Trainer/Trainer';
+import Leaderboard from '../components/Leaderboard/Leaderboard';
+import Guild from '../components/Guild/Guild';
 
 const Game = () => {
   const { selectedCharacter, loading } = useGame();
@@ -40,6 +43,12 @@ const Game = () => {
         return <Inventory />;
       case 'quests':
         return <QuestLog />;
+      case 'trainer':
+        return <Trainer />;
+      case 'leaderboard':
+        return <Leaderboard />;
+      case 'guild':
+        return <Guild />;
       default:
         return <BattleArena />;
     }
@@ -78,6 +87,9 @@ const Game = () => {
                   { id: 'shop', label: 'Shop', icon: '🏪' },
                   { id: 'inventory', label: 'Inventory', icon: '🎒' },
                   { id: 'quests', label: 'Quests', icon: '📜' },
+                  { id: 'trainer', label: 'Trainer', icon: '🎓' },
+                  { id: 'guild', label: 'Guild', icon: '🛡️' },
+                  { id: 'leaderboard', label: 'Rankings', icon: '🏆' },
                 ].map((item) => (
                   <button
                     key={item.id}

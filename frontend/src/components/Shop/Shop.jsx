@@ -1,26 +1,84 @@
 import { useState, useEffect } from 'react';
 import { useGame } from '../../contexts/GameContext';
+import { shopAPI } from '../../services/api';
 
 const Shop = () => {
   const { selectedCharacter } = useGame();
-  const [activeTab, setActiveTab] = useState('weapons');
-  const [items, setItems] = useState({
-    weapons: [
-      { id: 1, name: 'Iron Sword', type: 'weapon', price: 100, stats: { damage: 10 }, rarity: 'common' },
-      { id: 2, name: 'Steel Battleaxe', type: 'weapon', price: 250, stats: { damage: 18 }, rarity: 'uncommon' },
-      { id: 3, name: 'Magic Staff', type: 'weapon', price: 300, stats: { magicPower: 15 }, rarity: 'rare' },
-    ],
-    armor: [
-      { id: 4, name: 'Leather Armor', type: 'armor', price: 80, stats: { defense: 5 }, rarity: 'common' },
-      { id: 5, name: 'Chain Mail', type: 'armor', price: 200, stats: { defense: 12 }, rarity: 'uncommon' },
-      { id: 6, name: 'Plate Armor', type: 'armor', price: 500, stats: { defense: 20 }, rarity: 'rare' },
-    ],
-    consumables: [
-      { id: 7, name: 'Health Potion', type: 'consumable', price: 20, effect: 'Restore 50 HP', rarity: 'common' },
-      { id: 8, name: 'Mana Potion', type: 'consumable', price: 25, effect: 'Restore 30 MP', rarity: 'common' },
-      { id: 9, name: 'Elixir', type: 'consumable', price: 100, effect: 'Restore 100 HP & 50 MP', rarity: 'uncommon' },
-    ],
-  });
+  const [shops, setShops] = useState([]);
+  const [selectedShop, setSelectedShop] = useState(null);
+  const [shopItems, setShopItems] = useState(null);
+  const [activeTab, setActiveTab] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchShops();
+  }, []);
+
+  useEffect(() => {
+    if (selectedShop) {
+      fetchShopItems(selectedShop._id);
+    }
+  }, [selectedShop]);
+
+  const fetchShops = async () => {
+    try {
+      setLoading(true);
+      const response = await shopAPI.getAllShops();
+      setShops(response.data.data);
+      if (response.data.data.length > 0) {
+        setSelectedShop(response.data.data[0]);
+      }
+    } catch (error) {
+      setError('Failed to fetch shops');
+      console.error('Error fetching shops:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchShopItems = async (shopId) => {
+    try {
+      const response = await shopAPI.getShopItems(shopId);
+      setShopItems(response.data.data);
+    } catch (error) {
+      setError('Failed to fetch shop items');
+      console.error('Error fetching shop items:', error);
+    }
+  };
+
+  const handleBuyItem = async (itemId, item) => {
+    try {
+      setError('');
+      await shopAPI.buyItem(selectedShop._id, {
+        characterId: selectedCharacter._id,
+        itemId,
+        quantity: 1
+      });
+      
+      // Refresh character data to update gold
+      // You might want to implement a better state management solution
+      window.location.reload();
+    } catch (error) {
+      setError(error.response?.data?.error || 'Failed to buy item');
+    }
+  };
+
+  const handleSellItem = async (itemId) => {
+    try {
+      setError('');
+      await shopAPI.sellItem(selectedShop._id, {
+        characterId: selectedCharacter._id,
+        itemId,
+        quantity: 1
+      });
+      
+      // Refresh character data
+      window.location.reload();
+    } catch (error) {
+      setError(error.response?.data?.error || 'Failed to sell item');
+    }
+  };
 
   const getRarityColor = (rarity) => {
     switch (rarity) {
@@ -33,14 +91,14 @@ const Shop = () => {
     }
   };
 
-  const handleBuyItem = (item) => {
-    if (selectedCharacter.gold < item.price) {
-      alert('Not enough gold!');
-      return;
-    }
-    // TODO: Implement actual purchase logic with backend
-    console.log('Buying item:', item);
+  const filterItems = (items) => {
+    if (activeTab === 'all') return items;
+    return items.filter(shopItem => shopItem.item.type === activeTab);
   };
+
+  if (loading) {
+    return <div className="game-panel p-4">Loading shops...</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -54,62 +112,128 @@ const Shop = () => {
         </div>
       </div>
 
-      {/* Shop Tabs */}
+      {error && (
+        <div className="bg-red-600 text-white p-4 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {/* Shop Selection */}
       <div className="game-panel p-4">
-        <div className="flex gap-4 mb-6">
-          {Object.keys(items).map((tab) => (
+        <h3 className="text-lg font-bold mb-3">Select Shop</h3>
+        <div className="flex gap-2 overflow-x-auto">
+          {shops.map((shop) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={shop._id}
+              onClick={() => setSelectedShop(shop)}
               className={`px-4 py-2 rounded ${
-                activeTab === tab ? 'bg-game-accent' : 'bg-game-primary'
-              } capitalize`}
+                selectedShop?._id === shop._id ? 'bg-game-accent' : 'bg-game-primary'
+              }`}
             >
-              {tab}
+              {shop.name}
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Items Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items[activeTab].map((item) => (
-            <div key={item.id} className="bg-game-primary p-4 rounded-lg">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className={`font-bold ${getRarityColor(item.rarity)}`}>
-                  {item.name}
-                </h3>
-                <span className="text-game-gold font-bold">{item.price} 🪙</span>
-              </div>
-              
-              <div className="text-sm text-gray-400 mb-3">
-                {item.stats ? (
-                  Object.entries(item.stats).map(([stat, value]) => (
+      {/* Shop Items */}
+      {selectedShop && shopItems && (
+        <div className="game-panel p-4">
+          <h3 className="text-lg font-bold mb-3">{selectedShop.name}'s Inventory</h3>
+          
+          {/* Item Type Tabs */}
+          <div className="flex gap-2 mb-4 overflow-x-auto">
+            {['all', 'weapon', 'armor', 'consumable'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1 rounded ${
+                  activeTab === tab ? 'bg-game-accent' : 'bg-game-primary'
+                } capitalize`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Items Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filterItems(shopItems.items).map((shopItem) => (
+              <div key={shopItem.item._id} className="bg-game-primary p-4 rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className={`font-bold ${getRarityColor(shopItem.item.rarity)}`}>
+                    {shopItem.item.name}
+                  </h3>
+                  <span className="text-game-gold font-bold">{shopItem.price} 🪙</span>
+                </div>
+                
+                <p className="text-sm text-gray-300 mb-2">{shopItem.item.description}</p>
+                
+                <div className="text-sm text-gray-400 mb-3">
+                  {shopItem.item.stats && Object.entries(shopItem.item.stats).map(([stat, value]) => (
                     <div key={stat} className="capitalize">
                       {stat}: +{value}
                     </div>
-                  ))
-                ) : (
-                  <div>{item.effect}</div>
-                )}
+                  ))}
+                  {shopItem.item.effects && shopItem.item.effects.map((effect, index) => (
+                    <div key={index}>
+                      {effect.type}: +{effect.value}
+                    </div>
+                  ))}
+                </div>
+                
+                <button
+                  onClick={() => handleBuyItem(shopItem.item._id, shopItem.item)}
+                  className="game-button w-full text-sm"
+                  disabled={selectedCharacter.gold < shopItem.price}
+                >
+                  {selectedCharacter.gold < shopItem.price ? 'Not enough gold' : 'Buy'}
+                </button>
               </div>
-              
-              <button
-                onClick={() => handleBuyItem(item)}
-                className="game-button w-full text-sm"
-                disabled={selectedCharacter.gold < item.price}
-              >
-                {selectedCharacter.gold < item.price ? 'Not enough gold' : 'Buy'}
-              </button>
+            ))}
+          </div>
+
+          {filterItems(shopItems.items).length === 0 && (
+            <div className="text-center text-gray-400 py-4">
+              No items available in this category
             </div>
-          ))}
+          )}
         </div>
-      </div>
+      )}
 
       {/* Sell Items Section */}
       <div className="game-panel p-4">
         <h3 className="text-xl font-bold mb-4">Sell Items</h3>
         <p className="text-gray-400 mb-4">Select items from your inventory to sell</p>
-        <button className="game-button">Open Inventory</button>
+        
+        {selectedCharacter.inventory && selectedCharacter.inventory.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {selectedCharacter.inventory.filter(invItem => invItem.item.isSellable).map((invItem) => (
+              <div key={invItem._id} className="bg-game-primary p-4 rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className={`font-bold ${getRarityColor(invItem.item.rarity)}`}>
+                    {invItem.item.name}
+                  </h3>
+                  <span className="text-game-gold font-bold">
+                    {Math.floor(invItem.item.value * (selectedShop?.shop.buyMultiplier || 0.5))} 🪙
+                  </span>
+                </div>
+                
+                <p className="text-sm text-gray-300 mb-2">{invItem.item.description}</p>
+                <p className="text-sm text-gray-400 mb-2">Quantity: {invItem.quantity}</p>
+                
+                <button
+                  onClick={() => handleSellItem(invItem.item._id)}
+                  className="game-button w-full text-sm"
+                >
+                  Sell
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-400">You have no items to sell</p>
+        )}
       </div>
     </div>
   );

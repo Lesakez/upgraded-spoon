@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Character from '../models/Character.js';
+import Item from '../models/Item.js';
 import { asyncHandler } from '../middleware/error.middleware.js';
 
 // Generate JWT Token
@@ -9,11 +11,11 @@ const generateToken = (id) => {
   });
 };
 
-// @desc    Register user
+// @desc    Register user and create initial character
 // @route   POST /api/auth/register
 // @access  Public
 export const register = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, characterName, characterClass } = req.body;
 
   // Check if user exists
   const userExists = await User.findOne({ $or: [{ email }, { username }] });
@@ -23,12 +25,74 @@ export const register = asyncHandler(async (req, res) => {
     throw new Error('User already exists with that email or username');
   }
 
+  // Check if character name is taken
+  const characterExists = await Character.findOne({ name: characterName });
+  if (characterExists) {
+    res.status(400);
+    throw new Error('Character name is already taken');
+  }
+
   // Create user
   const user = await User.create({
     username,
     email,
     password
   });
+
+  // Find starter items for the character's class
+  let starterWeapon, starterArmor;
+  const healthPotions = await Item.findOne({ name: 'Health Potion' });
+
+  switch (characterClass) {
+    case 'warrior':
+      starterWeapon = await Item.findOne({ name: 'Rusty Sword' });
+      starterArmor = await Item.findOne({ name: 'Leather Armor' });
+      break;
+    case 'mage':
+      starterWeapon = await Item.findOne({ name: 'Wooden Staff' });
+      starterArmor = await Item.findOne({ name: 'Cloth Robe' });
+      break;
+    case 'rogue':
+      starterWeapon = await Item.findOne({ name: 'Rusty Dagger' });
+      starterArmor = await Item.findOne({ name: 'Leather Armor' });
+      break;
+    case 'healer':
+      starterWeapon = await Item.findOne({ name: 'Wooden Staff' });
+      starterArmor = await Item.findOne({ name: 'Cloth Robe' });
+      break;
+    default:
+      starterWeapon = await Item.findOne({ name: 'Rusty Sword' });
+      starterArmor = await Item.findOne({ name: 'Leather Armor' });
+  }
+
+  // Create default character
+  const character = await Character.create({
+    user: user._id,
+    name: characterName,
+    class: characterClass || 'warrior',
+    // Starting stats
+    stats: {
+      strength: characterClass === 'warrior' ? 12 : 10,
+      intelligence: characterClass === 'mage' ? 12 : 10,
+      dexterity: characterClass === 'rogue' ? 12 : 10,
+      vitality: characterClass === 'healer' ? 12 : 10
+    },
+    // Starting gold
+    gold: 100,
+    // Starting equipment
+    equipment: {
+      weapon: starterWeapon ? starterWeapon._id : null,
+      armor: starterArmor ? starterArmor._id : null
+    },
+    // Starting inventory
+    inventory: healthPotions ? [
+      { item: healthPotions._id, quantity: 5 }
+    ] : []
+  });
+
+  // Add character to user's characters array
+  user.characters.push(character._id);
+  await user.save();
 
   // Create token
   const token = generateToken(user._id);
@@ -41,6 +105,12 @@ export const register = asyncHandler(async (req, res) => {
       username: user.username,
       email: user.email,
       role: user.role
+    },
+    character: {
+      id: character._id,
+      name: character.name,
+      class: character.class,
+      level: character.level
     }
   });
 });

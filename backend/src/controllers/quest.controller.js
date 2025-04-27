@@ -41,48 +41,62 @@ export const getAvailableQuests = asyncHandler(async (req, res) => {
 // @route   POST /api/quests/:questId/accept
 // @access  Private
 export const acceptQuest = asyncHandler(async (req, res) => {
-  const { characterId } = req.body;
-  const quest = await Quest.findById(req.params.questId);
-  const character = await Character.findById(characterId);
-
-  if (!quest) {
-    res.status(404);
-    throw new Error('Quest not found');
-  }
-
-  if (!character) {
-    res.status(404);
-    throw new Error('Character not found');
-  }
-
-  // Make sure user owns character
-  if (character.user.toString() !== req.user.id) {
-    res.status(401);
-    throw new Error('Not authorized to accept quest for this character');
-  }
-
-  // Check if character can accept quest
-  if (!quest.canBeAcceptedBy(character)) {
-    res.status(400);
-    throw new Error('Character cannot accept this quest');
-  }
-
-  // Add quest to character's active quests
-  character.activeQuests.push({
-    quest: quest._id,
-    progress: new Map(quest.objectives.map(obj => [obj.target, 0])),
-    startedAt: new Date()
-  });
-
-  await character.save();
-
-  res.status(200).json({
-    success: true,
-    data: {
-      quest,
-      startedAt: new Date()
+  try {
+    const { characterId } = req.body;
+    
+    if (!characterId) {
+      res.status(400);
+      throw new Error('Character ID is required');
     }
-  });
+
+    const quest = await Quest.findById(req.params.questId);
+    const character = await Character.findById(characterId);
+
+    if (!quest) {
+      res.status(404);
+      throw new Error('Quest not found');
+    }
+
+    if (!character) {
+      res.status(404);
+      throw new Error('Character not found');
+    }
+
+    // Make sure user owns character
+    if (character.user.toString() !== req.user.id) {
+      res.status(401);
+      throw new Error('Not authorized to accept quest for this character');
+    }
+
+    // Check if character can accept quest
+    if (!quest.canBeAcceptedBy(character)) {
+      res.status(400);
+      throw new Error('Character cannot accept this quest');
+    }
+
+    // Add quest to character's active quests
+    character.activeQuests.push({
+      quest: quest._id,
+      progress: new Map(quest.objectives.map(obj => [obj.target, 0])),
+      startedAt: new Date()
+    });
+
+    await character.save();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        quest,
+        startedAt: new Date()
+      }
+    });
+  } catch (error) {
+    console.error('Error in acceptQuest:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to accept quest'
+    });
+  }
 });
 
 // @desc    Update quest progress

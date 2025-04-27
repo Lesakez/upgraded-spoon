@@ -45,10 +45,10 @@ export const characterAPI = {
 
 export const questAPI = {
   getAvailableQuests: (characterId) => api.get(`/quests/available/${characterId}`),
-  acceptQuest: (questId, characterId) => api.post(`/quests/${questId}/accept`, { characterId }),
+  acceptQuest: (questId, data) => api.post(`/quests/${questId}/accept`, data),
   updateProgress: (questId, data) => api.put(`/quests/${questId}/progress`, data),
-  completeQuest: (questId, characterId) => api.post(`/quests/${questId}/complete`, { characterId }),
-  abandonQuest: (questId, characterId) => api.post(`/quests/${questId}/abandon`, { characterId }),
+  completeQuest: (questId, data) => api.post(`/quests/${questId}/complete`, data),
+  abandonQuest: (questId, data) => api.post(`/quests/${questId}/abandon`, data),
 };
 
 export const dungeonAPI = {

@@ -117,10 +117,11 @@ export const GameProvider = ({ children }) => {
   };
 
   const sendChatMessage = (message, channel = 'global') => {
-    if (selectedCharacter) {
+    if (selectedCharacter && socketService.connected) {
       socketService.sendChatMessage(message, channel);
     }
   };
+  
 
   const attackTarget = (targetId, targetType = 'monster') => {
     if (selectedCharacter) {

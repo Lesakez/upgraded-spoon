@@ -6,24 +6,33 @@ import { asyncHandler } from '../middleware/error.middleware.js';
 // @route   GET /api/characters/:characterId/inventory
 // @access  Private
 export const getInventory = asyncHandler(async (req, res) => {
-  const character = await Character.findById(req.params.characterId)
-    .populate('inventory.item');
+  try {
+    const character = await Character.findById(req.params.characterId)
+      .populate('inventory.item');
 
-  if (!character) {
-    res.status(404);
-    throw new Error('Character not found');
+    if (!character) {
+      res.status(404);
+      throw new Error('Character not found');
+    }
+
+    // Make sure user owns character
+    if (character.user.toString() !== req.user.id) {
+      res.status(401);
+      throw new Error('Not authorized to access this character\'s inventory');
+    }
+
+    // Return the character's inventory directly
+    res.status(200).json({
+      success: true,
+      data: character.inventory || []
+    });
+  } catch (error) {
+    console.error('Error in getInventory:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch inventory'
+    });
   }
-
-  // Make sure user owns character
-  if (character.user.toString() !== req.user.id) {
-    res.status(401);
-    throw new Error('Not authorized to access this character\'s inventory');
-  }
-
-  res.status(200).json({
-    success: true,
-    data: character.inventory
-  });
 });
 
 // @desc    Add item to inventory

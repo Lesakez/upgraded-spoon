@@ -14,15 +14,12 @@ const router = express.Router();
 // All routes are protected
 router.use(protect);
 
-router.route('/characters/:characterId/inventory')
-  .get(getInventory)
-  .post(addItemToInventory);
-
-router.route('/characters/:characterId/inventory/:itemId')
-  .delete(removeItemFromInventory);
-
-router.post('/characters/:characterId/inventory/:itemId/use', useItem);
-router.post('/characters/:characterId/inventory/:itemId/drop', dropItem);
-router.post('/characters/:characterId/inventory/:itemId/transfer', transferItem);
+// Fix the route parameters - remove redundant path
+router.get('/:characterId/inventory', getInventory);
+router.post('/:characterId/inventory', addItemToInventory);
+router.delete('/:characterId/inventory/:itemId', removeItemFromInventory);
+router.post('/:characterId/inventory/:itemId/use', useItem);
+router.post('/:characterId/inventory/:itemId/drop', dropItem);
+router.post('/:characterId/inventory/:itemId/transfer', transferItem);
 
 export default router;

@@ -17,7 +17,7 @@ const Chat = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (message.trim()) {
+    if (message.trim() && selectedCharacter) {
       sendChatMessage(message.trim(), channel);
       setMessage('');
     }

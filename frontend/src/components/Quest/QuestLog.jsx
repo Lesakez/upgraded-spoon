@@ -31,7 +31,7 @@ const QuestLog = () => {
 
   const handleAcceptQuest = async (questId) => {
     try {
-      await questAPI.acceptQuest(questId, selectedCharacter._id);
+      await questAPI.acceptQuest(questId, { characterId: selectedCharacter._id });
       fetchQuests(); // Refresh quests
     } catch (error) {
       console.error('Failed to accept quest:', error);

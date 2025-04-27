@@ -43,7 +43,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/characters', characterRoutes);
 app.use('/api/quests', questRoutes);
 app.use('/api/dungeons', dungeonRoutes);
-app.use('/api/inventory', inventoryRoutes);
+app.use('/api/characters', inventoryRoutes);
 app.use('/api/guilds', guildRoutes);
 app.use('/api/shops', shopRoutes);
 app.use('/api/training', trainingRoutes);
